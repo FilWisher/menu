@@ -170,6 +170,7 @@ main{padding-bottom:150px}
       menuFor: "Menu for", main: "Main meal", sides: "Sides", dessert: "Dessert", summary: "Your meal",
       stepMain: "Choose your main meal", stepSides: "Choose your sides", stepDessert: "Choose your dessert",
       moreThanOne: "You can pick more than one",
+      
       custardNote: "You can add custard to another dessert",
       select: "Select", selected: "Selected", back: "Back", next: "Next", again: "Start again",
       showText: "Show text", hideText: "Hide text", other: "Español", none: "None",
@@ -182,6 +183,7 @@ main{padding-bottom:150px}
       menuFor: "Menú del", main: "Principal", sides: "Guarnición", dessert: "Postre", summary: "Su comida",
       stepMain: "Elija el plato principal", stepSides: "Elija las guarniciones", stepDessert: "Elija el postre",
       moreThanOne: "Puede elegir más de uno",
+      
       custardNote: "Puede añadir crema inglesa a otro postre",
       select: "Elegir", selected: "Elegido", back: "Atrás", next: "Siguiente", again: "Empezar de nuevo",
       showText: "Mostrar texto", hideText: "Ocultar texto", other: "English", none: "Ninguno",
@@ -207,7 +209,11 @@ main{padding-bottom:150px}
   var advanceTimer = null;
 
   function t(k) { return STR[S.lang][k]; }
-  function list(cat) { return window.MENU[S.day][S.meal][CATS[cat]]; }
+  var ADDON = { dessert: "custard" };
+  function list(cat) {
+    var l = window.MENU[S.day][S.meal][CATS[cat]];
+    return cat === "sides" ? l.concat(window.ALWAYS_AVAILABLE || []) : l;
+  }
   function nameOf(it) { return S.lang === "es" ? it.name_es : it.name; }
   function esc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
   function isSingle(cat) { return cat === "main"; }
@@ -253,7 +259,8 @@ main{padding-bottom:150px}
   function stepPage() {
     var cat = S.screen;
     var titles = { main: t("stepMain"), sides: t("stepSides"), dessert: t("stepDessert") };
-    var sub = cat === "sides" ? "<p>" + esc(t("moreThanOne")) + "</p>" : (cat === "dessert" ? "<p>" + esc(t("custardNote")) + "</p>" : "");
+    var notes = { sides: "moreThanOne", dessert: "custardNote" };
+    var sub = notes[cat] ? "<p>" + esc(t(notes[cat])) + "</p>" : "";
     return '<div class="wrap">' +
       '<div class="topbar">' + controls() + "</div>" +
       '<div class="heading"><h1>' + esc(titles[cat]) + "</h1>" + sub + "</div>" +
@@ -338,21 +345,20 @@ main{padding-bottom:150px}
         render(false);
         clearTimeout(advanceTimer);
         advanceTimer = setTimeout(function () { if (S.screen === cat) go("sides"); }, 350);
-      } else {
-        var arr = S.sel[cat], wasOn = arr.indexOf(id) > -1;
-        if (cat === "dessert" && id !== "custard") {
-          // one dessert at a time; custard can be added alongside it
-          arr = S.sel.dessert = arr.filter(function (x) { return x === "custard"; });
-          if (!wasOn) arr.push(id);
-        } else if (wasOn) {
-          arr.splice(arr.indexOf(id), 1);
-        } else {
-          arr.push(id);
-        }
-        var y = window.pageYOffset;
-        render(false);
-        window.scrollTo(0, y);
+        return;
       }
+      var arr = S.sel[cat], wasOn = arr.indexOf(id) > -1;
+      if (ADDON[cat] && id !== ADDON[cat]) {
+        arr = S.sel[cat] = arr.filter(function (x) { return x === ADDON[cat]; });
+        if (!wasOn) arr.push(id);
+      } else if (wasOn) {
+        arr.splice(arr.indexOf(id), 1);
+      } else {
+        arr.push(id);
+      }
+      var y = window.pageYOffset;
+      render(false);
+      window.scrollTo(0, y);
       return;
     }
     if (act === "next") {

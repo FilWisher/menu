@@ -1646,3 +1646,16 @@ window.MENU = {
   }
  }
 };
+window.ALWAYS_AVAILABLE = [
+ {
+  "name": "Gravy",
+  "name_es": "Salsa de carne (gravy)",
+  "id": "gravy",
+  "tags": [
+   "healthier_eating",
+   "level_7_easy_chew",
+   "gluten_free",
+   "vegan"
+  ]
+ }
+];
