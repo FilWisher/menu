@@ -58,13 +58,6 @@ ol,ul{padding:0;list-style:none}
 .ctrl.lang{background:var(--sun);border-color:var(--ink);color:var(--ink)}
 .ctrl:active{transform:scale(.97)}
 
-.steps{display:flex;gap:8px;margin-top:12px}
-.steps li{
-  flex:1;text-align:center;padding:8px 4px;border-radius:12px;
-  font-weight:700;font-size:.95rem;color:var(--muted);background:#D6E0E8;
-}
-.steps li.now{background:var(--ink);color:#fff}
-.steps li.done{background:var(--green);color:#fff}
 
 .heading{padding:14px 0 6px}
 .heading h1{font-size:clamp(1.7rem,5.2vw,2.4rem);line-height:1.15;font-weight:700}
@@ -151,7 +144,6 @@ main{padding-bottom:150px}
   .squares{gap:28px}
   .controls{min-height:60px}
   .ctrl{min-height:60px;font-size:1.25rem}
-  .steps li{font-size:1.1rem}
   .name{font-size:1.35rem}
   .navbtn{min-height:84px;font-size:1.8rem}
 }
@@ -178,6 +170,7 @@ main{padding-bottom:150px}
       menuFor: "Menu for", main: "Main meal", sides: "Sides", dessert: "Dessert", summary: "Your meal",
       stepMain: "Choose your main meal", stepSides: "Choose your sides", stepDessert: "Choose your dessert",
       moreThanOne: "You can pick more than one",
+      custardNote: "You can add custard to another dessert",
       select: "Select", selected: "Selected", back: "Back", next: "Next", again: "Start again",
       showText: "Show text", hideText: "Hide text", other: "Español", none: "None",
       mainLabel: "Main meal", sidesLabel: "Sides", dessertLabel: "Dessert",
@@ -189,6 +182,7 @@ main{padding-bottom:150px}
       menuFor: "Menú del", main: "Principal", sides: "Guarnición", dessert: "Postre", summary: "Su comida",
       stepMain: "Elija el plato principal", stepSides: "Elija las guarniciones", stepDessert: "Elija el postre",
       moreThanOne: "Puede elegir más de uno",
+      custardNote: "Puede añadir crema inglesa a otro postre",
       select: "Elegir", selected: "Elegido", back: "Atrás", next: "Siguiente", again: "Empezar de nuevo",
       showText: "Mostrar texto", hideText: "Ocultar texto", other: "English", none: "Ninguno",
       mainLabel: "Plato principal", sidesLabel: "Guarniciones", dessertLabel: "Postre",
@@ -216,7 +210,8 @@ main{padding-bottom:150px}
   function list(cat) { return window.MENU[S.day][S.meal][CATS[cat]]; }
   function nameOf(it) { return S.lang === "es" ? it.name_es : it.name; }
   function esc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
-  function isSel(cat, id) { return cat === "main" ? S.sel.main === id : S.sel[cat].indexOf(id) > -1; }
+  function isSingle(cat) { return cat === "main"; }
+  function isSel(cat, id) { return isSingle(cat) ? S.sel[cat] === id : S.sel[cat].indexOf(id) > -1; }
 
   /* ---------- views ---------- */
   function controls() {
@@ -228,15 +223,6 @@ main{padding-bottom:150px}
     }
     html += '<button class="ctrl lang" data-act="lang" lang="' + (S.lang === "en" ? "es" : "en") + '">' + t("other") + "</button>";
     return '<div class="controls">' + html + "</div>";
-  }
-
-  function stepsBar() {
-    var labels = [t("main"), t("sides"), t("dessert"), t("summary")];
-    var idx = STEPS.indexOf(S.screen);
-    return '<ol class="steps" aria-label="Progress">' + labels.map(function (l, i) {
-      var cls = i === idx ? "now" : (i < idx ? "done" : "");
-      return '<li class="' + cls + '"' + (i === idx ? ' aria-current="step"' : "") + ">" + esc(l) + "</li>";
-    }).join("") + "</ol>";
   }
 
   function home() {
@@ -267,9 +253,9 @@ main{padding-bottom:150px}
   function stepPage() {
     var cat = S.screen;
     var titles = { main: t("stepMain"), sides: t("stepSides"), dessert: t("stepDessert") };
-    var sub = cat === "main" ? "" : "<p>" + esc(t("moreThanOne")) + "</p>";
+    var sub = cat === "sides" ? "<p>" + esc(t("moreThanOne")) + "</p>" : (cat === "dessert" ? "<p>" + esc(t("custardNote")) + "</p>" : "");
     return '<div class="wrap">' +
-      '<div class="topbar">' + controls() + stepsBar() + "</div>" +
+      '<div class="topbar">' + controls() + "</div>" +
       '<div class="heading"><h1>' + esc(titles[cat]) + "</h1>" + sub + "</div>" +
       '<div class="grid">' + list(cat).map(function (it) { return card(cat, it); }).join("") + "</div>" +
       "</div>";
@@ -277,7 +263,7 @@ main{padding-bottom:150px}
 
   function chosen(cat) {
     var all = list(cat);
-    if (cat === "main") return all.filter(function (i) { return i.id === S.sel.main; });
+    if (isSingle(cat)) return all.filter(function (i) { return i.id === S.sel[cat]; });
     return all.filter(function (i) { return S.sel[cat].indexOf(i.id) > -1; });
   }
 
@@ -294,7 +280,7 @@ main{padding-bottom:150px}
         "</div>";
     });
     return '<div class="wrap">' +
-      '<div class="topbar">' + controls() + stepsBar() + "</div>" +
+      '<div class="topbar">' + controls() + "</div>" +
       '<div class="heading"><h1>' + esc(t("summary")) + "</h1></div>" +
       '<div class="summary-grid">' + cards + "</div>" +
       '<section class="summary-text" aria-live="polite"><h2>' + esc(t(S.meal)) + " · " + esc(t("days")[S.day]) + "</h2><dl>" + dl + "</dl></section>" +
@@ -347,14 +333,22 @@ main{padding-bottom:150px}
     }
     if (act === "select") {
       var cat = el.getAttribute("data-cat"), id = el.getAttribute("data-id");
-      if (cat === "main") {
-        S.sel.main = id;
+      if (isSingle(cat)) {
+        S.sel[cat] = id;
         render(false);
         clearTimeout(advanceTimer);
-        advanceTimer = setTimeout(function () { if (S.screen === "main") go("sides"); }, 350);
+        advanceTimer = setTimeout(function () { if (S.screen === cat) go("sides"); }, 350);
       } else {
-        var arr = S.sel[cat], i = arr.indexOf(id);
-        if (i > -1) arr.splice(i, 1); else arr.push(id);
+        var arr = S.sel[cat], wasOn = arr.indexOf(id) > -1;
+        if (cat === "dessert" && id !== "custard") {
+          // one dessert at a time; custard can be added alongside it
+          arr = S.sel.dessert = arr.filter(function (x) { return x === "custard"; });
+          if (!wasOn) arr.push(id);
+        } else if (wasOn) {
+          arr.splice(arr.indexOf(id), 1);
+        } else {
+          arr.push(id);
+        }
         var y = window.pageYOffset;
         render(false);
         window.scrollTo(0, y);

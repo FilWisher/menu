@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Food images – review</title>
+<style>
+@font-face{font-family:"Atkinson Hyperlegible";src:url("fonts/atkinson-hyperlegible-latin-400-normal.woff2") format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Atkinson Hyperlegible";src:url("fonts/atkinson-hyperlegible-latin-700-normal.woff2") format("woff2");font-weight:700;font-display:swap}
+:root{--bg:#E9EFF3;--ink:#14232F;--muted:#46586A;--line:#C3D0DA}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Atkinson Hyperlegible",-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;font-size:18px;line-height:1.3}
+.wrap{max-width:1200px;margin:0 auto;padding:20px 16px 48px}
+h1{margin:0;font-size:clamp(1.6rem,4vw,2.2rem);line-height:1.15}
+.lead{margin:6px 0 0;color:var(--muted)}
+h2{margin:36px 0 0;padding-top:12px;border-top:3px solid var(--ink);font-size:1.5rem}
+h2 span{color:var(--muted);font-weight:400;font-size:1.1rem;margin-left:8px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:14px}
+@media (min-width:700px){.grid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px}}
+figure{margin:0;background:#fff;border:3px solid var(--line);border-radius:18px;overflow:hidden}
+figure img{display:block;width:100%;height:auto;aspect-ratio:1;object-fit:contain;background:#fff}
+figcaption{padding:10px 14px 14px;border-top:2px solid var(--line)}
+.en{font-weight:700;font-size:1.1rem}
+.es{margin-top:2px;color:var(--muted);font-size:1.05rem}
+.id{margin-top:6px;font-size:.8rem;color:#7a8a98;word-break:break-all}
+@media print{body{background:#fff}figure{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Food images</h1>
+  <p class="lead" id="count"></p>
+  <div id="out"></div>
+</div>
+<script src="menu.js"></script>
+<script>
+(function () {
+  var GROUPS = [
+    ["soup", "Soups", "Sopas"],
+    ["main_courses", "Main courses", "Platos principales"],
+    ["sides", "Sides", "Guarniciones"],
+    ["hot_dessert", "Hot desserts", "Postres calientes"],
+    ["extras", "Always available", "Siempre disponible"]
+  ];
+  var seen = {}, buckets = {};
+  GROUPS.forEach(function (g) { buckets[g[0]] = []; });
+  buckets.extras.push({ id: "gravy", name: "Gravy", name_es: "Salsa de carne (gravy)" });
+  seen.gravy = true;
+
+  Object.keys(window.MENU).forEach(function (day) {
+    Object.keys(window.MENU[day]).forEach(function (meal) {
+      GROUPS.forEach(function (g) {
+        (window.MENU[day][meal][g[0]] || []).forEach(function (it) {
+          if (!seen[it.id]) { seen[it.id] = true; buckets[g[0]].push(it); }
+        });
+      });
+    });
+  });
+
+  function esc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+  var total = 0, html = "";
+  GROUPS.forEach(function (g) {
+    var items = buckets[g[0]].sort(function (a, b) { return a.name.localeCompare(b.name); });
+    total += items.length;
+    html += "<h2>" + esc(g[1]) + " / " + esc(g[2]) + "<span>" + items.length + "</span></h2><div class=\"grid\">" +
+      items.map(function (it) {
+        return "<figure><img src=\"images/" + it.id + ".jpg\" alt=\"" + esc(it.name) + "\" loading=\"lazy\">" +
+          "<figcaption><div class=\"en\">" + esc(it.name) + "</div><div class=\"es\" lang=\"es\">" + esc(it.name_es) + "</div>" +
+          "<div class=\"id\">" + esc(it.id) + "</div></figcaption></figure>";
+      }).join("") + "</div>";
+  });
+  document.getElementById("out").innerHTML = html;
+  document.getElementById("count").textContent = total + " images, with English and Spanish names";
+})();
+</script>
+</body>
+</html>
