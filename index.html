@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Meal choices">
+<meta name="theme-color" content="#E9EFF3">
+<title>Choose your meal</title>
+<style>
+@font-face{font-family:"Atkinson Hyperlegible";src:url("fonts/atkinson-hyperlegible-latin-400-normal.woff2") format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Atkinson Hyperlegible";src:url("fonts/atkinson-hyperlegible-latin-700-normal.woff2") format("woff2");font-weight:700;font-display:swap}
+
+:root{
+  --bg:#E9EFF3;
+  --surface:#FFFFFF;
+  --ink:#14232F;
+  --muted:#46586A;
+  --navy:#1F3556;
+  --green:#0B7A57;
+  --green-tint:#E1F3EA;
+  --sun:#FFC94A;
+  --night:#26376B;
+  --line:#C3D0DA;
+  --radius:22px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Atkinson Hyperlegible",-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;
+  font-size:20px;line-height:1.35;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touch-action:manipulation;-webkit-appearance:none;appearance:none}
+button:focus-visible{outline:4px solid #0A5CD6;outline-offset:3px}
+h1,h2,p,ol,ul{margin:0}
+ol,ul{padding:0;list-style:none}
+
+.wrap{max-width:1100px;margin:0 auto;padding:0 16px}
+
+/* ---------- top bar ---------- */
+.topbar{
+  position:sticky;top:0;z-index:5;background:var(--bg);
+  padding:max(12px,env(safe-area-inset-top)) 0 10px;
+}
+.controls{display:flex;gap:12px;justify-content:flex-end;min-height:56px}
+.ctrl{
+  min-height:56px;padding:0 24px;border-radius:16px;
+  font-weight:700;font-size:1.15rem;
+  display:inline-flex;align-items:center;justify-content:center;
+  border:3px solid var(--navy);background:var(--surface);color:var(--navy);
+}
+.ctrl.on{background:var(--navy);color:#fff}
+.ctrl.lang{background:var(--sun);border-color:var(--ink);color:var(--ink)}
+.ctrl:active{transform:scale(.97)}
+
+.steps{display:flex;gap:8px;margin-top:12px}
+.steps li{
+  flex:1;text-align:center;padding:8px 4px;border-radius:12px;
+  font-weight:700;font-size:.95rem;color:var(--muted);background:#D6E0E8;
+}
+.steps li.now{background:var(--ink);color:#fff}
+.steps li.done{background:var(--green);color:#fff}
+
+.heading{padding:14px 0 6px}
+.heading h1{font-size:clamp(1.7rem,5.2vw,2.4rem);line-height:1.15;font-weight:700}
+.heading p{margin-top:6px;color:var(--muted);font-size:1.15rem}
+
+main{padding-bottom:150px}
+
+/* ---------- home ---------- */
+.home-day{padding:18px 0 4px}
+.home-day h1{font-size:clamp(1.9rem,6vw,2.8rem);line-height:1.1;font-weight:700}
+.home-day p{margin-top:6px;color:var(--muted);font-size:1.2rem}
+.squares{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+.square{
+  aspect-ratio:1;border-radius:28px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:clamp(8px,3vw,24px);
+  font-weight:700;font-size:clamp(1.7rem,6vw,3rem);
+}
+.square svg{width:46%;height:auto}
+.square.lunch{background:var(--sun);color:var(--ink)}
+.square.dinner{background:var(--night);color:#fff}
+.square:active{transform:scale(.98)}
+.days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-top:28px}
+.day{
+  min-height:60px;border-radius:14px;font-weight:700;font-size:.95rem;padding:0;
+  background:var(--surface);border:3px solid var(--line);color:var(--ink);
+}
+.day.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.days-label{margin-top:28px;font-weight:700;color:var(--muted)}
+
+/* ---------- choice cards ---------- */
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px}
+.card{
+  display:flex;flex-direction:column;background:var(--surface);
+  border-radius:var(--radius);border:5px solid var(--line);overflow:hidden;
+}
+.card.is-selected{border-color:var(--green);background:var(--green-tint)}
+.photo{aspect-ratio:1;background:#fff;display:block;overflow:hidden}
+.photo img{width:100%;height:100%;object-fit:contain;display:block;mix-blend-mode:multiply;pointer-events:none;transform:scale(1.12)}
+.name{padding:12px 14px 12px;font-weight:700;font-size:1.2rem;line-height:1.2}
+.pick{
+  margin:auto 12px 12px;width:calc(100% - 24px);min-height:68px;border-radius:16px;flex:none;
+  background:var(--navy);color:#fff;font-weight:700;font-size:1.4rem;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+}
+.pick:active{transform:scale(.98)}
+.card.is-selected .pick{background:var(--green)}
+.pick svg{width:30px;height:30px;flex:none}
+
+/* ---------- summary ---------- */
+.summary-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px}
+.summary-grid .card{border-color:var(--green)}
+.summary-text{
+  margin-top:20px;background:var(--surface);border-radius:var(--radius);
+  border:5px solid var(--ink);padding:18px 20px;
+}
+.summary-text h2{font-size:1.5rem;font-weight:700;margin-bottom:10px}
+.summary-text dl{margin:0;display:grid;gap:12px}
+.summary-text dt{font-weight:700;color:var(--muted);font-size:1.05rem}
+.summary-text dd{margin:2px 0 0;font-weight:700;font-size:1.45rem;line-height:1.25}
+.summary-text dd + dd{margin-top:2px}
+
+/* ---------- bottom nav ---------- */
+.nav{
+  position:fixed;left:0;right:0;bottom:0;z-index:6;
+  background:rgba(233,239,243,.96);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  border-top:2px solid var(--line);
+  padding:12px 0 calc(12px + env(safe-area-inset-bottom));
+}
+.nav .wrap{display:flex;gap:12px}
+.navbtn{
+  flex:1;min-height:76px;border-radius:18px;font-weight:700;font-size:1.6rem;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+}
+.navbtn svg{width:32px;height:32px;flex:none}
+.navbtn.back{background:var(--surface);border:4px solid var(--navy);color:var(--navy)}
+.navbtn.next{background:var(--navy);color:#fff}
+.navbtn.restart{background:var(--green);color:#fff}
+.navbtn[aria-disabled="true"]{opacity:.35;pointer-events:none}
+.navbtn:active{transform:scale(.98)}
+
+@media (min-width:700px){
+  .wrap{padding:0 28px}
+  .grid,.summary-grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px;margin-top:18px}
+  .squares{gap:28px}
+  .controls{min-height:60px}
+  .ctrl{min-height:60px;font-size:1.25rem}
+  .steps li{font-size:1.1rem}
+  .name{font-size:1.35rem}
+  .navbtn{min-height:84px;font-size:1.8rem}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<noscript>This page needs JavaScript to run.</noscript>
+
+<script src="menu.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var ORDER = ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"];
+  var JS_DAY = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];
+  var CATS = { main: "main_courses", sides: "sides", dessert: "hot_dessert" };
+  var STEPS = ["main", "sides", "dessert", "summary"];
+
+  var STR = {
+    en: {
+      pickMeal: "Pick lunch or dinner", lunch: "Lunch", dinner: "Dinner",
+      menuFor: "Menu for", main: "Main meal", sides: "Sides", dessert: "Dessert", summary: "Your meal",
+      stepMain: "Choose your main meal", stepSides: "Choose your sides", stepDessert: "Choose your dessert",
+      moreThanOne: "You can pick more than one",
+      select: "Select", selected: "Selected", back: "Back", next: "Next", again: "Start again",
+      showText: "Show text", hideText: "Hide text", other: "Español", none: "None",
+      mainLabel: "Main meal", sidesLabel: "Sides", dessertLabel: "Dessert",
+      days: { monday:"Monday", tuesday:"Tuesday", wednesday:"Wednesday", thursday:"Thursday", friday:"Friday", saturday:"Saturday", sunday:"Sunday" },
+      short: { monday:"Mon", tuesday:"Tue", wednesday:"Wed", thursday:"Thu", friday:"Fri", saturday:"Sat", sunday:"Sun" }
+    },
+    es: {
+      pickMeal: "Elija almuerzo o cena", lunch: "Almuerzo", dinner: "Cena",
+      menuFor: "Menú del", main: "Principal", sides: "Guarnición", dessert: "Postre", summary: "Su comida",
+      stepMain: "Elija el plato principal", stepSides: "Elija las guarniciones", stepDessert: "Elija el postre",
+      moreThanOne: "Puede elegir más de uno",
+      select: "Elegir", selected: "Elegido", back: "Atrás", next: "Siguiente", again: "Empezar de nuevo",
+      showText: "Mostrar texto", hideText: "Ocultar texto", other: "English", none: "Ninguno",
+      mainLabel: "Plato principal", sidesLabel: "Guarniciones", dessertLabel: "Postre",
+      days: { monday:"lunes", tuesday:"martes", wednesday:"miércoles", thursday:"jueves", friday:"viernes", saturday:"sábado", sunday:"domingo" },
+      short: { monday:"lun", tuesday:"mar", wednesday:"mié", thursday:"jue", friday:"vie", saturday:"sáb", sunday:"dom" }
+    }
+  };
+
+  var ICON = {
+    sun: '<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="19" fill="currentColor"/><g stroke="currentColor" stroke-width="7" stroke-linecap="round"><path d="M50 10v12M50 78v12M10 50h12M78 50h12M21.7 21.7l8.5 8.5M69.8 69.8l8.5 8.5M21.7 78.3l8.5-8.5M69.8 30.2l8.5-8.5"/></g></svg>',
+    moon: '<svg viewBox="0 0 100 100" aria-hidden="true"><path fill="currentColor" d="M62 12a38 38 0 1 0 26 60A32 32 0 0 1 62 12z"/><circle cx="76" cy="26" r="4" fill="currentColor"/><circle cx="88" cy="44" r="3" fill="currentColor"/></svg>',
+    left: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+    right: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
+    check: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>'
+  };
+
+  var today = JS_DAY[new Date().getDay()];
+  var S = {
+    screen: "home", day: today, meal: null, lang: "en", showText: false,
+    sel: { main: null, sides: [], dessert: [] }
+  };
+  var advanceTimer = null;
+
+  function t(k) { return STR[S.lang][k]; }
+  function list(cat) { return window.MENU[S.day][S.meal][CATS[cat]]; }
+  function nameOf(it) { return S.lang === "es" ? it.name_es : it.name; }
+  function esc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+  function isSel(cat, id) { return cat === "main" ? S.sel.main === id : S.sel[cat].indexOf(id) > -1; }
+
+  /* ---------- views ---------- */
+  function controls() {
+    var onStep = STEPS.indexOf(S.screen) > -1 && S.screen !== "summary";
+    var html = "";
+    if (onStep) {
+      html += '<button class="ctrl' + (S.showText ? " on" : "") + '" data-act="toggleText" aria-pressed="' + S.showText + '">' +
+        (S.showText ? t("hideText") : t("showText")) + "</button>";
+    }
+    html += '<button class="ctrl lang" data-act="lang" lang="' + (S.lang === "en" ? "es" : "en") + '">' + t("other") + "</button>";
+    return '<div class="controls">' + html + "</div>";
+  }
+
+  function stepsBar() {
+    var labels = [t("main"), t("sides"), t("dessert"), t("summary")];
+    var idx = STEPS.indexOf(S.screen);
+    return '<ol class="steps" aria-label="Progress">' + labels.map(function (l, i) {
+      var cls = i === idx ? "now" : (i < idx ? "done" : "");
+      return '<li class="' + cls + '"' + (i === idx ? ' aria-current="step"' : "") + ">" + esc(l) + "</li>";
+    }).join("") + "</ol>";
+  }
+
+  function home() {
+    var daysHtml = ORDER.map(function (d) {
+      return '<button class="day' + (d === S.day ? " on" : "") + '" data-act="day" data-day="' + d + '" aria-pressed="' + (d === S.day) + '">' + esc(t("short")[d]) + "</button>";
+    }).join("");
+    return '<div class="wrap">' +
+      '<div class="topbar">' + controls() + "</div>" +
+      '<div class="home-day"><h1>' + esc(t("pickMeal")) + "</h1><p>" + esc(t("menuFor")) + " " + esc(t("days")[S.day]) + "</p></div>" +
+      '<div class="squares">' +
+        '<button class="square lunch" data-act="meal" data-meal="lunch">' + ICON.sun + "<span>" + esc(t("lunch")) + "</span></button>" +
+        '<button class="square dinner" data-act="meal" data-meal="dinner">' + ICON.moon + "<span>" + esc(t("dinner")) + "</span></button>" +
+      "</div>" +
+      '<div class="days" role="group">' + daysHtml + "</div>" +
+      "</div>";
+  }
+
+  function card(cat, it) {
+    var on = isSel(cat, it.id);
+    return '<article class="card' + (on ? " is-selected" : "") + '">' +
+      '<div class="photo"><img src="images/' + it.id + '.jpg" alt="' + esc(nameOf(it)) + '" draggable="false"></div>' +
+      (S.showText ? '<div class="name">' + esc(nameOf(it)) + "</div>" : "") +
+      '<button class="pick" data-act="select" data-cat="' + cat + '" data-id="' + it.id + '" aria-pressed="' + on + '">' +
+        (on ? ICON.check + "<span>" + esc(t("selected")) + "</span>" : "<span>" + esc(t("select")) + "</span>") +
+      "</button></article>";
+  }
+
+  function stepPage() {
+    var cat = S.screen;
+    var titles = { main: t("stepMain"), sides: t("stepSides"), dessert: t("stepDessert") };
+    var sub = cat === "main" ? "" : "<p>" + esc(t("moreThanOne")) + "</p>";
+    return '<div class="wrap">' +
+      '<div class="topbar">' + controls() + stepsBar() + "</div>" +
+      '<div class="heading"><h1>' + esc(titles[cat]) + "</h1>" + sub + "</div>" +
+      '<div class="grid">' + list(cat).map(function (it) { return card(cat, it); }).join("") + "</div>" +
+      "</div>";
+  }
+
+  function chosen(cat) {
+    var all = list(cat);
+    if (cat === "main") return all.filter(function (i) { return i.id === S.sel.main; });
+    return all.filter(function (i) { return S.sel[cat].indexOf(i.id) > -1; });
+  }
+
+  function summary() {
+    var groups = [["main", t("mainLabel")], ["sides", t("sidesLabel")], ["dessert", t("dessertLabel")]];
+    var cards = "", dl = "";
+    groups.forEach(function (g) {
+      var items = chosen(g[0]);
+      items.forEach(function (it) {
+        cards += '<article class="card"><div class="photo"><img src="images/' + it.id + '.jpg" alt="' + esc(nameOf(it)) + '" draggable="false"></div></article>';
+      });
+      dl += "<div><dt>" + esc(g[1]) + "</dt>" +
+        (items.length ? items.map(function (it) { return "<dd>" + esc(nameOf(it)) + "</dd>"; }).join("") : "<dd>" + esc(t("none")) + "</dd>") +
+        "</div>";
+    });
+    return '<div class="wrap">' +
+      '<div class="topbar">' + controls() + stepsBar() + "</div>" +
+      '<div class="heading"><h1>' + esc(t("summary")) + "</h1></div>" +
+      '<div class="summary-grid">' + cards + "</div>" +
+      '<section class="summary-text" aria-live="polite"><h2>' + esc(t(S.meal)) + " · " + esc(t("days")[S.day]) + "</h2><dl>" + dl + "</dl></section>" +
+      "</div>";
+  }
+
+  function navBar() {
+    if (S.screen === "home") return "";
+    var last = S.screen === "summary";
+    var canNext = S.screen === "main" ? !!S.sel.main : true;
+    return '<nav class="nav" aria-label="Navigation"><div class="wrap">' +
+      '<button class="navbtn back" data-act="back">' + ICON.left + "<span>" + esc(t("back")) + "</span></button>" +
+      (last
+        ? '<button class="navbtn restart" data-act="restart"><span>' + esc(t("again")) + "</span></button>"
+        : '<button class="navbtn next" data-act="next" aria-disabled="' + (!canNext) + '"><span>' + esc(t("next")) + "</span>" + ICON.right + "</button>") +
+      "</div></nav>";
+  }
+
+  function render(scrollTop) {
+    var body = S.screen === "home" ? home() : (S.screen === "summary" ? summary() : stepPage());
+    document.getElementById("app").innerHTML = "<main>" + body + "</main>" + navBar();
+    document.documentElement.lang = S.lang;
+    if (scrollTop) window.scrollTo(0, 0);
+  }
+
+  /* ---------- flow ---------- */
+  function go(screen) {
+    clearTimeout(advanceTimer);
+    S.screen = screen;
+    render(true);
+  }
+  function stepIndex() { return STEPS.indexOf(S.screen); }
+
+  function onClick(e) {
+    var el = e.target.closest("[data-act]");
+    if (!el) return;
+    var act = el.getAttribute("data-act");
+
+    if (act === "lang") { S.lang = S.lang === "en" ? "es" : "en"; render(false); return; }
+    if (act === "toggleText") { S.showText = !S.showText; render(false); return; }
+    if (act === "day") {
+      var d = el.getAttribute("data-day");
+      if (d !== S.day) { S.day = d; S.meal = null; S.sel = { main: null, sides: [], dessert: [] }; }
+      render(false); return;
+    }
+    if (act === "meal") {
+      var m = el.getAttribute("data-meal");
+      if (m !== S.meal) { S.meal = m; S.sel = { main: null, sides: [], dessert: [] }; }
+      go("main"); return;
+    }
+    if (act === "select") {
+      var cat = el.getAttribute("data-cat"), id = el.getAttribute("data-id");
+      if (cat === "main") {
+        S.sel.main = id;
+        render(false);
+        clearTimeout(advanceTimer);
+        advanceTimer = setTimeout(function () { if (S.screen === "main") go("sides"); }, 350);
+      } else {
+        var arr = S.sel[cat], i = arr.indexOf(id);
+        if (i > -1) arr.splice(i, 1); else arr.push(id);
+        var y = window.pageYOffset;
+        render(false);
+        window.scrollTo(0, y);
+      }
+      return;
+    }
+    if (act === "next") {
+      if (el.getAttribute("aria-disabled") === "true") return;
+      go(STEPS[stepIndex() + 1]); return;
+    }
+    if (act === "back") {
+      var i2 = stepIndex();
+      go(i2 <= 0 ? "home" : STEPS[i2 - 1]); return;
+    }
+    if (act === "restart") {
+      S.meal = null; S.sel = { main: null, sides: [], dessert: [] }; S.showText = false;
+      go("home"); return;
+    }
+  }
+
+  document.getElementById("app").addEventListener("click", onClick);
+  render(false);
+})();
+</script>
+</body>
+</html>
